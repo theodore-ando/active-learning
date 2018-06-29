@@ -6,7 +6,7 @@ with open("README.md", "r") as rdr:
 
 
 setuptools.setup(
-    name="active-learning",
+    name="active_learning",
     version="0.0.1",
     author="Theodore Ando",
     author_email="tando2@icloud.com",
