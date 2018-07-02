@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 
@@ -56,20 +57,20 @@ def retrain_model(problem, train_ixs, obs_labels):
     problem['model'] = model.fit(points[train_ixs], obs_labels)
 
 
-def make_save_accuracies(accuracies, X_test, y_test):
+def make_save_scores(scores, score_fn, X_test, y_test):
     """
-    Callback to save the accuracy of the model on a test set
+    Callback to save the score of the model on a test set (i.e.: accuracy, F1, etc)
     :param X_test:
     :param y_test:
     :return:
     """
-
-    def save_accuracy_scores(problem, train_ixs, obs_labels, **kwargs):
+    def save_scores(problem, train_ixs, obs_labels, **kwargs):
         model = problem['model']
-        acc = model.score(X_test, y_test)
-        accuracies.append(acc)
+        pred_labels = model.predict(X_test)
+        score = score_fn(y_test, pred_labels)
+        scores.append(score)
 
-    return save_accuracy_scores
+    return save_scores
 
 
 def make_save_queries(queries_list):
@@ -127,14 +128,42 @@ def make_training_oracle(y_true: np.array):
 # -----------------------------------------------------------------------------
 
 
+def _standardize_score_fns(score_fns) -> dict:
+    if isinstance(score_fns, dict):
+        return score_fns
+
+    if callable(score_fns):
+        return {
+            "score": score_fns
+        }
+
+    if score_fns is None:
+        return {
+            "accuracy": accuracy_score
+        }
+
+    if isinstance(score_fns, list) or isinstance(score_fns, tuple):
+        if callable(score_fns[0]):
+            return {
+                f"score{i}": score_fn
+                for i, score_fn in enumerate(score_fns)
+            }
+
+        return dict(score_fns)
+
+    raise TypeError("score_fns bad")
+
+
 def perform_experiment(X, y, base_estimator=SVC(probability=True), n_queries=40, batch_size=1, semisupervised=False,
-                       log_test_acc=True, init_L_size=2, selector=identity_selector, query_strat=uncertainty_sampling):
+                       init_L_size=2, selector=identity_selector, query_strat=uncertainty_sampling,
+                       score_fns=None, random_state=None):
+    score_fns = _standardize_score_fns(score_fns)
+
     # These are the fields which can be filled in
     experiment_data = {
         "n_targets": [],
         "queries": [],
-        "history": [],
-        "accuracies": [],
+        "history": []
     }
 
     callbacks = []
@@ -142,13 +171,15 @@ def perform_experiment(X, y, base_estimator=SVC(probability=True), n_queries=40,
     callbacks += [make_save_queries(experiment_data["queries"])]
     callbacks += [make_history_retrain(experiment_data["history"])]
 
-    # if log_test_acc, then we log accuracies on a test set
-    if log_test_acc:
-        X_train, X_test, y_train, y_test = train_test_split(X, y)
-        X, y = X_train, y_train
+    # if score_fn, then
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state)
+    X, y = X_train, y_train
 
-        acc_callback = make_save_accuracies(experiment_data["accuracies"], X_test, y_test)
-        callbacks.append(acc_callback)
+    for name, score_fn in score_fns.items():
+        experiment_data[name] = []
+        score_callback = make_save_scores(experiment_data[name], score_fn, X_test, y_test)
+        callbacks.append(score_callback)
+
 
     L = make_training_set(y, size=init_L_size)
     oracle = make_training_oracle(y)

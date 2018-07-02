@@ -1,3 +1,12 @@
+# IDE specific stuff
 .idea/
+
+# python running stuff
 __pycache__/
+.py[doc]
+
+# package related stuff
 active_learning.egg-info/
+
+# virtual environment
+al_venv/
