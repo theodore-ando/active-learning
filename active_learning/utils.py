@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.base import ClassifierMixin
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
@@ -21,10 +22,11 @@ def chunks(l: list, n: int) -> list:
         l = l[chunk_size:]
 
 
-def make_training_set(y: np.ndarray, size: int = 5, n_targets: int = 1):
+def make_training_set(estimator, y: np.ndarray, size: int = 5, n_targets: int = 1):
     """
     Produces a training set for active learning problems.
 
+    :param estimator: estimator we are training
     :param y: array of labels for points in the problem space
     :param size: size of the training set to produce
     :param n_targets: number of targets (y=1) to include in training set
@@ -33,9 +35,13 @@ def make_training_set(y: np.ndarray, size: int = 5, n_targets: int = 1):
     assert size >= 0 and 0 <= n_targets <= size
 
     train_ixs = np.random.randint(low=0, high=len(y), size=size)
-    while sum(y[train_ixs]) != n_targets:
-        train_ixs = np.random.randint(low=0, high=len(y), size=size)
 
+    # if classification problem, we only want to include so many targets in the input
+    if isinstance(estimator, ClassifierMixin):
+        while sum(y[train_ixs]) != n_targets:
+            train_ixs = np.random.randint(low=0, high=len(y), size=size)
+
+    # otherwise we can just use random selection
     return train_ixs
 
 
@@ -181,7 +187,7 @@ def perform_experiment(X, y, base_estimator=SVC(probability=True), n_queries=40,
         callbacks.append(score_callback)
 
 
-    L = make_training_set(y, size=init_L_size)
+    L = make_training_set(base_estimator, y, size=init_L_size)
     oracle = make_training_oracle(y)
 
     problem = {

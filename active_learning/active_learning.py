@@ -1,9 +1,7 @@
 import logging
 import numpy as np
 from collections import Iterable
-
-
-from sklearn.base import BaseEstimator, ClassifierMixin
+from tqdm import tqdm
 
 from active_learning.query_strats import uncertainty_sampling
 from active_learning.selectors import identity_selector
@@ -37,7 +35,7 @@ def _actively_learn(problem, train_ixs, obs_labels, oracle,
     num_queries = problem['num_queries']
     batch_size = problem['batch_size']
 
-    for i in range(num_queries):
+    for i in tqdm(range(num_queries)):
         print(f"Query {i} / {num_queries}")
 
         # get the available points we might want to query
