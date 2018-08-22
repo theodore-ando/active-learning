@@ -2,7 +2,7 @@ from multiprocessing import cpu_count
 
 from joblib import Parallel, delayed
 import numpy as np
-import sklearn.base
+from sklearn.base import clone
 
 from active_learning.utils import chunks
 from . import argmax
@@ -15,7 +15,7 @@ of every unlabeled point.
 """
 
 
-def _lookahead(problem, model, train_ixs, obs_labels, x, label):
+def _lookahead(points, model, train_ixs, obs_labels, x, label):
     """
     Does a lookahead at what the model would be if (x, label) were added to the
     known set.  If the model implements the partial_fit API from sklearn, then
@@ -39,7 +39,6 @@ def _lookahead(problem, model, train_ixs, obs_labels, x, label):
     if hasattr(model, "partial_fit"):
         return model.partial_fit([x], [label], [0, 1])
 
-    points = problem['points']
     X_train = np.concatenate([points[train_ixs], [x]])
     obs_labels = np.concatenate([obs_labels, [label]])
     return model.fit(X_train, obs_labels)
@@ -49,8 +48,8 @@ def _split_lookahead(problem, points_and_models, train_ixs, obs_labels):
     """
     """
     return [
-        (_lookahead(problem, models[0], train_ixs, obs_labels, x, 0),
-         _lookahead(problem, models[1], train_ixs, obs_labels, x, 1))
+        (_lookahead(problem['points'], models[0], train_ixs, obs_labels, x, 0),
+         _lookahead(problem['points'], models[1], train_ixs, obs_labels, x, 1))
         for x, models in points_and_models
     ]
 
@@ -89,10 +88,28 @@ def _split_future_utility(models, points, test_set, budget):
     )
 
 
+def _mem_saver(model, points, train_ixs, obs_labels, unlabeled_chunk, all_unlabeled_ixs, budget):
+    model_copy = clone(model)
+    chunk_scores = []
+    for unlabeled_ix in unlabeled_chunk:
+        test_set = np.delete(all_unlabeled_ixs, np.argwhere(all_unlabeled_ixs == unlabeled_ix))
+        p0, p1 = model.predict_proba(points[[unlabeled_ix]]).reshape(-1)
+
+        m0 = _lookahead(points, model_copy, train_ixs, obs_labels, points[unlabeled_ix], label=0)
+        s0 = _expected_future_utility(m0, points, test_set, budget)
+
+        m1 = _lookahead(points, model_copy, train_ixs, obs_labels, points[unlabeled_ix], label=1)
+        s1 = _expected_future_utility(m1, points, test_set, budget)
+
+        chunk_scores.append(p0 * s0 + p1 * s1)
+        del test_set
+
+    return np.array(chunk_scores)
+
+
 def _search_score(problem, train_ixs, obs_labels, unlabeled_ixs, batch_size, **kwargs):
     model = problem['model']
     points = problem['points']
-    training_set_size = problem['training_set_size']
 
     # num queries remaining
     budget = kwargs['budget']
@@ -104,41 +121,71 @@ def _search_score(problem, train_ixs, obs_labels, unlabeled_ixs, batch_size, **k
     backend = problem.get("parallel_backend", "threading")
 
     n_cpu = cpu_count()
+    n_chunks = len(unlabeled_ixs) // 100
+
     with Parallel(n_jobs=n_cpu, max_nbytes=1e6, backend=backend) as parallel:
-        # copy the model many times.  Partial fit on each candidate point
-        # and each possible label for that point
-        model_copies = np.array(sklearn.base.clone([model] * (2 * len(unlabeled_ixs))))
-        model_copies = model_copies.reshape(-1, 2)
-        points_and_models = list(zip(points[unlabeled_ixs], model_copies))
-        model_copies = parallel(
-            delayed(_split_lookahead)(problem, chunk, train_ixs, obs_labels)
-            for chunk in chunks(points_and_models, n_cpu)
-        )
-        model_copies = sum(model_copies, [])  # collapse list of lists into single list
-        # TODO: maybe we only need to evaluate when y=1, because y=0 cannot increase utility of remaining points??
-
-        # create one test set for each point: U_{i-1} \ {x}
-        test_sets = [
-            np.delete(unlabeled_ixs, i)
-            for i in range(len(unlabeled_ixs))
-        ]
-
-        utility_curr = np.sum(obs_labels)
-        probs = model.predict_proba(points[unlabeled_ixs])
-
-        # sometimes the budget might be too big, so take min
-        real_budget = min(budget*batch_size, len(test_sets[0]))
-
-        future_utilities = np.array(
-            parallel(
-                delayed(_split_future_utility)(models, points, test_set, real_budget)
-                for test_set, models in zip(test_sets, model_copies)
-            )
+        real_budget = min(budget * batch_size, len(unlabeled_ixs)-1)
+        expected_future_utilities = parallel(
+            delayed(_mem_saver)(model, points, train_ixs, obs_labels, chunk, unlabeled_ixs, real_budget)
+            for chunk in chunks(unlabeled_ixs, n_chunks)
         )
 
-    E_future_utilities = np.sum(probs * future_utilities, axis=1)
+        expected_future_utilities = np.concatenate(expected_future_utilities)
 
-    return utility_curr + probs[:, 1] + E_future_utilities
+    # print(expected_future_utilities)
+    return expected_future_utilities
+
+
+# def _search_score(problem, train_ixs, obs_labels, unlabeled_ixs, batch_size, **kwargs):
+#     model = problem['model']
+#     points = problem['points']
+#
+#     # num queries remaining
+#     budget = kwargs['budget']
+#     assert budget > 0
+#
+#     # OS X requires you to use "threading" rather than "multiprocessing"
+#     # because it doesn't support BLAS calls on both 'sides' of a fork
+#     # however, we cannot just use threading because RandomForest is not thread safe...
+#     backend = problem.get("parallel_backend", "threading")
+#
+#     n_cpu = cpu_count()
+#     with Parallel(n_jobs=n_cpu, max_nbytes=1e6, backend=backend) as parallel:
+#         # copy the model many times.  Partial fit on each candidate point
+#         # and each possible label for that point
+#         print("Making model copies")
+#         model_copies = np.array(clone([model] * (2 * len(unlabeled_ixs))))
+#         print("Made all my models!")
+#         model_copies = model_copies.reshape(-1, 2)
+#         points_and_models = list(zip(points[unlabeled_ixs], model_copies))
+#         model_copies = parallel(
+#             delayed(_split_lookahead)(problem, chunk, train_ixs, obs_labels)
+#             for chunk in chunks(points_and_models, n_cpu)
+#         )
+#         model_copies = sum(model_copies, [])  # collapse list of lists into single list
+#         # TODO: maybe we only need to evaluate when y=1, because y=0 cannot increase utility of remaining points??
+#
+#         # create one test set for each point: U_{i-1} \ {x}
+#         test_sets = [
+#             np.delete(unlabeled_ixs, i)
+#             for i in range(len(unlabeled_ixs))
+#         ]
+#
+#         # sometimes the budget might be too big, so take min
+#         real_budget = min(budget*batch_size, len(test_sets[0]))
+#
+#         future_utilities = np.array(
+#             parallel(
+#                 delayed(_split_future_utility)(models, points, test_set, real_budget)
+#                 for test_set, models in zip(test_sets, model_copies)
+#             )
+#         )
+#
+#     probs = model.predict_proba(points[unlabeled_ixs])
+#
+#     E_future_utilities = np.sum(probs * future_utilities, axis=1)
+#
+#     return probs[:, 1] + E_future_utilities
 
 
 def active_search(problem, train_ixs, obs_labels, unlabeled_ixs, npoints, **kwargs):

@@ -178,14 +178,14 @@ def perform_experiment(X, y, base_estimator=SVC(probability=True), n_queries=40,
     callbacks += [make_history_retrain(experiment_data["history"])]
 
     # if score_fn, then
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state)
-    X, y = X_train, y_train
+    if len(score_fns) > 0:
+        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state)
+        X, y = X_train, y_train
 
-    for name, score_fn in score_fns.items():
-        experiment_data[name] = []
-        score_callback = make_save_scores(experiment_data[name], score_fn, X_test, y_test)
-        callbacks.append(score_callback)
-
+        for name, score_fn in score_fns.items():
+            experiment_data[name] = []
+            score_callback = make_save_scores(experiment_data[name], score_fn, X_test, y_test)
+            callbacks.append(score_callback)
 
     L = make_training_set(base_estimator, y, size=init_L_size)
     oracle = make_training_oracle(y)

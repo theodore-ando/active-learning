@@ -14,8 +14,21 @@ def _score(estimators, points):
     return variances
 
 
-def rfr_variance(problem: dict, train_ixs: np.ndarray, obs_labels: np.ndarray, unlabeled_ixs: np.ndarray,
+def rfr_variance(problem: dict, train_ixs: np.ndarray, obs_values: np.ndarray, unlabeled_ixs: np.ndarray,
                  batch_size: int, **kwargs):
+    """
+    AL for regression based on RandomForestRegressor.  Like uncertainty sampling in the classification setting!
+    Use estimates from the trees in the forest, compute variance as uncertainty.
+    :param problem: dictionary that defines the problem, containing keys:
+        * points:       an (n_samples, n_dim) matrix of points in the space
+        * model:        the RandomForestRegressor model we are training
+    :param train_ixs:
+    :param obs_values:
+    :param unlabeled_ixs:
+    :param batch_size:
+    :param kwargs:
+    :return:
+    """
     points = problem['points']
     model: RandomForestRegressor = problem['model']
     assert isinstance(model, RandomForestRegressor)

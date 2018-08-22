@@ -1,7 +1,7 @@
 # Active Learning for Python
 
 This is a toolkit for active learning in python designed to be used in conjunction 
-with scikit-learn models. 
+with scikit-learn models.  Its structure comes from Roman Garnett's active learning [toolbox for Matlab](https://github.com/rmgarnett/active_learning).
 
 ## Installation
 

@@ -7,13 +7,25 @@ from sklearn.svm import SVR
 
 
 def _density(pts):
+    """Sort of density for a set of points"""
     pts = np.array(pts)
     dists = pdist(pts)
     return len(pts) / dists.max(), squareform(dists)
 
 
 def mcal_regression(problem: dict, train_ixs: np.ndarray, obs_labels: np.ndarray, unlabeled_ixs: np.ndarray,
-                          batch_size: int, **kwargs) -> np.ndarray:
+                    batch_size: int, **kwargs) -> np.ndarray:
+    """
+    Multiple criteria active regression for SVMs (https://doi.org/10.1016/j.patcog.2014.02.001).
+    :param problem: dictionary that defines the problem, containing keys:
+        * points:       an (n_samples, n_dim) matrix of points in the space
+        * model:        SVM regressor we are training
+    :param train_ixs: index into `points` of the training examples
+    :param obs_labels: labels for the training examples
+    :param unlabeled_ixs: np.array of the indices of the unlabeled examples
+    :param batch_size: size of the batch to select
+    :return:
+    """
     points: np.ndarray = problem['points']
     model: SVR = problem['model']
     assert isinstance(model, SVR)
