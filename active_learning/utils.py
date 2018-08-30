@@ -160,9 +160,41 @@ def _standardize_score_fns(score_fns) -> dict:
     raise TypeError("score_fns bad")
 
 
-def perform_experiment(X, y, base_estimator=SVC(probability=True), n_queries=40, batch_size=1, semisupervised=False,
-                       init_L_size=2, selector=identity_selector, query_strat=uncertainty_sampling, oracle=None,
+def perform_experiment(X: np.ndarray, y: np.ndarray, X_test: np.ndarray=None, y_test: np.ndarray=None,
+                       L=None,
+                       base_estimator=SVC(probability=True),
+                       init_L_size: int=2, n_queries: int=40, batch_size: int=1,
+                       semisupervised: bool=False,
+                       selector=identity_selector, query_strat=uncertainty_sampling, oracle=None,
                        score_fns=None, parallel_backend='threading', random_state=None, **kwargs):
+    """
+    A function that presents a simple API to users who don't need the most fine grained control.
+    :param X: numpy array of inputs: (n_samples, n_features)
+    :param y: numpy array of targets: (n_samples,)
+    :param X_test: numpy array of test set inputs.  Will be used rather than splitting if there are score functions
+    :param y_test: numpy array of test set targets.  Will be used rather than splitting if there are score functions
+    :param L:
+        numpy array of ints for the initial labeled set that indexes into X.  If None, then one will be selected and
+        will assume that all of the labels in y are correct.  If given, then y will only be assumed to be correct at
+        `y[L]`, otherwise it will be assumed to be entirely correct.
+    :param base_estimator: the scikit-learn compatible model to be trained
+    :param n_queries: number of queries to make of the oracle / iterations of active learning
+    :param batch_size: number of points that can be made in each query
+    :param semisupervised: if true, will use model to guess labels for points on which it is very confident
+    :param init_L_size: size of the initial labeled set to train the model
+    :param selector: selects what points are eligible in the next round
+    :param query_strat: selects points for the oracle to label
+    :param oracle: function to label any point in X
+    :param score_fns:
+        score functions to track after each round of AL.  Can be dict of name->function, list/tuple of functions, or
+        a single function.  if left to None, then accuracy will be used.  If there are any scoring functions (i.e.: you
+        do not explicitly set it to an empty dict) then a test set will be separated out from X, y.
+    :param parallel_backend: 'threading' or 'multiprocessing' to use in active search strategy
+    :param random_state: to use for train/test split for consistency across experiments
+    :param kwargs: passed to train_test_split
+    :return:
+        dictionary of data from the experiment
+    """
     score_fns = _standardize_score_fns(score_fns)
 
     # These are the fields which can be filled in
@@ -179,15 +211,18 @@ def perform_experiment(X, y, base_estimator=SVC(probability=True), n_queries=40,
 
     # if score_fn, then
     if len(score_fns) > 0:
-        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state, **kwargs)
-        X, y = X_train, y_train
+        if X_test is None or y_test is None:
+            X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state, **kwargs)
+            X, y = X_train, y_train
 
         for name, score_fn in score_fns.items():
             experiment_data[name] = []
             score_callback = make_save_scores(experiment_data[name], score_fn, X_test, y_test)
             callbacks.append(score_callback)
 
-    L = make_training_set(base_estimator, y, size=init_L_size)
+    if L is None:
+        L = make_training_set(base_estimator, y, size=init_L_size)
+
     if oracle is None:
         oracle = make_training_oracle(y)
 
