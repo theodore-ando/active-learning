@@ -10,7 +10,12 @@ by `pip install -e ./active-learning`
 
 ## Basic usage
 
+See [example.ipynb](example.ipynb) for the basic usage of the API and a simple comparison of some query strategies.
+[example_live.ipynb](example_live.ipynb) shows how easy it is to integrate a real person into the labeling loop. 
+
 ## Advanced Usage
+
+In the works.
 
 # License
 
