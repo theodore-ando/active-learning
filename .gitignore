@@ -3,7 +3,9 @@
 
 # python running stuff
 __pycache__/
+.ipynb_checkpoints/
 .py[doc]
+
 
 # package related stuff
 active_learning.egg-info/

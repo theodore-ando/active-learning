@@ -1,4 +1,4 @@
-def probability(problem, train_ixs, obs_labels, selected_ixs, **kwargs):
+def probability(problem, train_ixs, obs_labels, selected_ixs, batch_size, **kwargs):
     """
     Score is simply the probability of being a target under current model.
     :param problem: dictionary that defines the problem, containing keys:
