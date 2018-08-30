@@ -107,35 +107,6 @@ def _mem_saver(model, points, train_ixs, obs_labels, unlabeled_chunk, all_unlabe
     return np.array(chunk_scores)
 
 
-def _search_score(problem, train_ixs, obs_labels, unlabeled_ixs, batch_size, **kwargs):
-    model = problem['model']
-    points = problem['points']
-
-    # num queries remaining
-    budget = kwargs['budget']
-    assert budget > 0
-
-    # OS X requires you to use "threading" rather than "multiprocessing"
-    # because it doesn't support BLAS calls on both 'sides' of a fork
-    # however, we cannot just use threading because RandomForest is not thread safe...
-    backend = problem.get("parallel_backend", "threading")
-
-    n_cpu = cpu_count()
-    n_chunks = len(unlabeled_ixs) // 100
-
-    with Parallel(n_jobs=n_cpu, max_nbytes=1e6, backend=backend) as parallel:
-        real_budget = min(budget * batch_size, len(unlabeled_ixs)-1)
-        expected_future_utilities = parallel(
-            delayed(_mem_saver)(model, points, train_ixs, obs_labels, chunk, unlabeled_ixs, real_budget)
-            for chunk in chunks(unlabeled_ixs, n_chunks)
-        )
-
-        expected_future_utilities = np.concatenate(expected_future_utilities)
-
-    # print(expected_future_utilities)
-    return expected_future_utilities
-
-
 # def _search_score(problem, train_ixs, obs_labels, unlabeled_ixs, batch_size, **kwargs):
 #     model = problem['model']
 #     points = problem['points']
@@ -150,42 +121,69 @@ def _search_score(problem, train_ixs, obs_labels, unlabeled_ixs, batch_size, **k
 #     backend = problem.get("parallel_backend", "threading")
 #
 #     n_cpu = cpu_count()
+#     n_chunks = len(unlabeled_ixs) // 100
+#
 #     with Parallel(n_jobs=n_cpu, max_nbytes=1e6, backend=backend) as parallel:
-#         # copy the model many times.  Partial fit on each candidate point
-#         # and each possible label for that point
-#         print("Making model copies")
-#         model_copies = np.array(clone([model] * (2 * len(unlabeled_ixs))))
-#         print("Made all my models!")
-#         model_copies = model_copies.reshape(-1, 2)
-#         points_and_models = list(zip(points[unlabeled_ixs], model_copies))
-#         model_copies = parallel(
-#             delayed(_split_lookahead)(problem, chunk, train_ixs, obs_labels)
-#             for chunk in chunks(points_and_models, n_cpu)
-#         )
-#         model_copies = sum(model_copies, [])  # collapse list of lists into single list
-#         # TODO: maybe we only need to evaluate when y=1, because y=0 cannot increase utility of remaining points??
-#
-#         # create one test set for each point: U_{i-1} \ {x}
-#         test_sets = [
-#             np.delete(unlabeled_ixs, i)
-#             for i in range(len(unlabeled_ixs))
-#         ]
-#
-#         # sometimes the budget might be too big, so take min
-#         real_budget = min(budget*batch_size, len(test_sets[0]))
-#
-#         future_utilities = np.array(
-#             parallel(
-#                 delayed(_split_future_utility)(models, points, test_set, real_budget)
-#                 for test_set, models in zip(test_sets, model_copies)
-#             )
+#         real_budget = min(budget * batch_size, len(unlabeled_ixs)-1)
+#         expected_future_utilities = parallel(
+#             delayed(_mem_saver)(model, points, train_ixs, obs_labels, chunk, unlabeled_ixs, real_budget)
+#             for chunk in chunks(unlabeled_ixs, n_chunks)
 #         )
 #
-#     probs = model.predict_proba(points[unlabeled_ixs])
+#         expected_future_utilities = np.concatenate(expected_future_utilities)
 #
-#     E_future_utilities = np.sum(probs * future_utilities, axis=1)
-#
-#     return probs[:, 1] + E_future_utilities
+#     # print(expected_future_utilities)
+#     return expected_future_utilities
+
+
+def _search_score(problem, train_ixs, obs_labels, unlabeled_ixs, batch_size, **kwargs):
+    model = problem['model']
+    points = problem['points']
+
+    # num queries remaining
+    budget = kwargs['budget']
+    assert budget > 0
+
+    # OS X requires you to use "threading" rather than "multiprocessing"
+    # because it doesn't support BLAS calls on both 'sides' of a fork
+    # however, we cannot just use threading because RandomForest is not thread safe...
+    backend = problem.get("parallel_backend", "threading")
+
+    n_cpu = cpu_count()
+    with Parallel(n_jobs=n_cpu, max_nbytes=1e6, backend=backend) as parallel:
+        # copy the model many times.  Partial fit on each candidate point
+        # and each possible label for that point
+        model_copies = np.array(clone([model] * (2 * len(unlabeled_ixs))))
+        model_copies = model_copies.reshape(-1, 2)
+        points_and_models = list(zip(points[unlabeled_ixs], model_copies))
+        model_copies = parallel(
+            delayed(_split_lookahead)(problem, chunk, train_ixs, obs_labels)
+            for chunk in chunks(points_and_models, n_cpu)
+        )
+        model_copies = sum(model_copies, [])  # collapse list of lists into single list
+        # TODO: maybe we only need to evaluate when y=1, because y=0 cannot increase utility of remaining points??
+
+        # create one test set for each point: U_{i-1} \ {x}
+        test_sets = [
+            np.delete(unlabeled_ixs, i)
+            for i in range(len(unlabeled_ixs))
+        ]
+
+        # sometimes the budget might be too big, so take min
+        real_budget = min(budget*batch_size, len(test_sets[0]))
+
+        future_utilities = np.array(
+            parallel(
+                delayed(_split_future_utility)(models, points, test_set, real_budget)
+                for test_set, models in zip(test_sets, model_copies)
+            )
+        )
+
+    probs = model.predict_proba(points[unlabeled_ixs])
+
+    E_future_utilities = np.sum(probs * future_utilities, axis=1)
+
+    return probs[:, 1] + 0.10 * E_future_utilities
 
 
 def active_search(problem, train_ixs, obs_labels, unlabeled_ixs, npoints, **kwargs):
