@@ -161,8 +161,8 @@ def _standardize_score_fns(score_fns) -> dict:
 
 
 def perform_experiment(X, y, base_estimator=SVC(probability=True), n_queries=40, batch_size=1, semisupervised=False,
-                       init_L_size=2, selector=identity_selector, query_strat=uncertainty_sampling,
-                       score_fns=None, random_state=None):
+                       init_L_size=2, selector=identity_selector, query_strat=uncertainty_sampling, oracle=None,
+                       score_fns=None, parallel_backend='threading', random_state=None, **kwargs):
     score_fns = _standardize_score_fns(score_fns)
 
     # These are the fields which can be filled in
@@ -179,7 +179,7 @@ def perform_experiment(X, y, base_estimator=SVC(probability=True), n_queries=40,
 
     # if score_fn, then
     if len(score_fns) > 0:
-        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=random_state, **kwargs)
         X, y = X_train, y_train
 
         for name, score_fn in score_fns.items():
@@ -188,14 +188,16 @@ def perform_experiment(X, y, base_estimator=SVC(probability=True), n_queries=40,
             callbacks.append(score_callback)
 
     L = make_training_set(base_estimator, y, size=init_L_size)
-    oracle = make_training_oracle(y)
+    if oracle is None:
+        oracle = make_training_oracle(y)
 
     problem = {
         "model": base_estimator,
         "num_queries": n_queries,
         "batch_size": batch_size,
         "points": X,
-        "training_set_size": init_L_size
+        "training_set_size": init_L_size,
+        "parallel_backend": parallel_backend
     }
 
     retrain_model(problem, L, y[L])
