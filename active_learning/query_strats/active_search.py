@@ -98,16 +98,27 @@ def _mem_saver(model, points, train_ixs, obs_labels, unlabeled_chunk, all_unlabe
         # Get the probabilities of membership in either class
         p0, p1 = model.predict_proba(points[[unlabeled_ix]]).reshape(-1)
 
-        # Evaluate the effect of the point being labeled negative
-        m0 = _lookahead(points, model_copy, train_ixs, obs_labels, points[unlabeled_ix], label=0)
-        s0 = _expected_future_utility(m0, points, test_set, budget)
+        # If the budget is only for one more label, the score is just the probability
+        if budget - 1 == 0:
+            chunk_scores.append(p1)
+        else:
+            # If not, assess the effect of labeling this point
 
-        # Evaluate the effect of the point being labeled positive
-        m1 = _lookahead(points, model_copy, train_ixs, obs_labels, points[unlabeled_ix], label=1)
-        s1 = _expected_future_utility(m1, points, test_set, budget)
+            # Evaluate the effect of the point being labeled negative
+            m0 = _lookahead(points, model_copy, train_ixs, obs_labels, points[unlabeled_ix], label=0)
+            s0 = _expected_future_utility(m0, points, test_set, budget-1)
 
-        # Compute the score for this point
-        chunk_scores.append(p0 * s0 + p1 * s1)
+            # Evaluate the effect of the point being labeled positive
+            m1 = _lookahead(points, model_copy, train_ixs, obs_labels, points[unlabeled_ix], label=1)
+            s1 = _expected_future_utility(m1, points, test_set, budget-1)
+
+            # Compute the score for this point
+            #  This is equal to the probability of it being positive (p1) 
+            #  plus the expected number of positives found in the 
+            #  "budget - 1" remaining entries if this point is labeled,
+            #  which is equal to the product of the probability of "1" or "0"
+            #  times the number of positives in the top budget-1 if "1" or "0"
+            chunk_scores.append(p1 + (p0 * s0 + p1 * s1))
         del test_set
 
     return np.array(chunk_scores)
@@ -127,9 +138,9 @@ def _search_score(problem, train_ixs, obs_labels, unlabeled_ixs, batch_size, **k
     backend = problem.get("parallel_backend", "threading")
 
     n_cpu = cpu_count()
-    n_chunks = len(unlabeled_ixs) // 100
+    n_chunks = n_cpu * 100
 
-    with Parallel(n_jobs=n_cpu, max_nbytes=1e6, backend=backend) as parallel:
+    with Parallel(n_jobs=n_cpu, max_nbytes=1e6, backend=backend, verbose=2) as parallel:
         real_budget = min(budget * batch_size, len(unlabeled_ixs)-1)
         expected_future_utilities = parallel(
             delayed(_mem_saver)(model, points, train_ixs, obs_labels, chunk, unlabeled_ixs, real_budget)
@@ -146,3 +157,4 @@ def active_search(problem, train_ixs, obs_labels, unlabeled_ixs, npoints, **kwar
     score = _search_score
 
     return argmax(problem, train_ixs, obs_labels, unlabeled_ixs, score, npoints, **kwargs)
+
