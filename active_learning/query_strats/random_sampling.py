@@ -1,8 +1,10 @@
-import numpy as np
+from ..problem import ActiveLearningProblem
+from . import IndividualScoreQueryStrategy
+from random import random
 
 
-def random_sampling(problem, train_ixs, obs_labels, unlabeled_ixs, npoints, **kwargs):
-    """Simple random sample of points from unlabeled indices"""
-    rand_ixs = np.random.randint(0, len(unlabeled_ixs), size=npoints)
+class RandomQuery(IndividualScoreQueryStrategy):
+    """Randomly select entries from the unlabeled set"""
 
-    return unlabeled_ixs[rand_ixs]
+    def score(self, ind: int, problem: ActiveLearningProblem):
+        return random()

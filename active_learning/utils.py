@@ -7,7 +7,6 @@ from sklearn.svm import SVC
 from active_learning.selectors import identity_selector
 from active_learning.ss_active_learning import ss_actively_learn, _default_ssl_config
 from .active_learning import _actively_learn
-from active_learning.query_strats.uncertainty_sampling import uncertainty_sampling
 
 
 def chunks(l: list, n: int) -> list:
@@ -165,7 +164,7 @@ def perform_experiment(X: np.ndarray, y: np.ndarray, X_test: np.ndarray=None, y_
                        base_estimator=SVC(probability=True),
                        init_L_size: int=2, n_queries: int=40, batch_size: int=1,
                        semisupervised: bool=False,
-                       selector=identity_selector, query_strat=uncertainty_sampling, oracle=None,
+                       selector=identity_selector, query_strat=None, oracle=None,
                        score_fns=None, parallel_backend='threading', random_state=None, **kwargs):
     """
     A function that presents a simple API to users who don't need the most fine grained control.
