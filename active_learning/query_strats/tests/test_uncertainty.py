@@ -18,5 +18,4 @@ class TestUncertainty(TestCase):
         sampler = UncertaintySampling()
         probs = model.predict_proba(problem.points[problem.get_unlabeled_ixs()])
         score = -1 * np.multiply(probs, np.log(probs)).sum(axis=1)
-        self.assertTrue(np.isclose(score,
-                                   sampler._score_many(problem.get_unlabeled_ixs(), problem)).all())
+        self.assertTrue(np.isclose(score, sampler.score_all(problem)[1]).all())
