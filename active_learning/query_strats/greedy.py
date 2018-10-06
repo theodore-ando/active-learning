@@ -1,8 +1,11 @@
-from active_learning.query_strats import argmax
-from active_learning.scoring import probability
+from active_learning.problem import ActiveLearningProblem
+from . import IndividualScoreQueryStrategy
+from typing import List
 
 
-def greedy(problem, train_ixs, obs_labels, unlabeled_ixs, npoints, **kwargs):
-    """Greedily choose the most probably to be a target"""
-    score_fn = probability
-    return argmax(problem, train_ixs, obs_labels, unlabeled_ixs, score_fn, npoints)
+class GreedySearch(IndividualScoreQueryStrategy):
+    """Query strategy where you pick the score most likely to be the target label"""
+
+    def _score_chunk(self, inds: List[int], problem: ActiveLearningProblem):
+        probs = problem.model.predict_proba(problem.points[inds])
+        return probs[:, problem.positive_label]
