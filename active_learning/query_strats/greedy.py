@@ -8,4 +8,4 @@ class GreedySearch(IndividualScoreQueryStrategy):
 
     def _score_chunk(self, inds: List[int], problem: ActiveLearningProblem):
         probs = problem.model.predict_proba(problem.points[inds])
-        return probs[:, problem.positive_label]
+        return probs[:, problem.target_label]

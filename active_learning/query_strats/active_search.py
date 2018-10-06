@@ -107,14 +107,14 @@ class ActiveSearch(IndividualScoreQueryStrategy):
                            problem.labels, problem.points[unlabeled_ix],
                            label=0)
                 s0 = _expected_future_utility(model_copy, test_set,
-                                              problem.budget - 1, problem.positive_label)
+                                              problem.budget - 1, problem.target_label)
 
                 # Evaluate the effect of the point being labeled positive
                 _lookahead(problem.points, model_copy, problem.labeled_ixs,
                            problem.labels, problem.points[unlabeled_ix],
                            label=1)
                 s1 = _expected_future_utility(model_copy, test_set,
-                                              problem.budget - 1, problem.positive_label)
+                                              problem.budget - 1, problem.target_label)
 
                 # Compute the score for this point
                 #  This is equal to the probability of it being positive (p1)
