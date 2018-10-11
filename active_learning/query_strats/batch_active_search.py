@@ -1,8 +1,9 @@
+from ..problem import ActiveLearningProblem
+from . import BaseQueryStrategy
+from sklearn.base import BaseEstimator
+from copy import deepcopy
 import numpy as np
-from sklearn.base import clone
 
-from .active_search import active_search, _lookahead
-from ..selectors import identity_selector
 
 """
 https://bayesopt.github.io/papers/2017/12.pdf
@@ -11,92 +12,101 @@ https://bayesopt.github.io/papers/2017/12.pdf
 # -----------------------------------------------------------------------------
 #                   Fictional Oracles to Simulate Sequential
 # -----------------------------------------------------------------------------
-def _sampling_oracle(model, x: np.array) -> int:
-    """
-    Samples a label according to bernoulli trial with probability of target
-    from model
-    :param model: sklearn model trained on the observed samples observed,
-        as well as the points and fictional labels in the batch so far.
-    :param x: point to be labeled
-    """
-    probs = model.predict_proba([x])
-    probs = probs.reshape(2)
-    return np.random.binomial(1, probs[1])
 
 
-def _most_likely_oracle(model, x):
-    """
-    Return the most likely label for x according to model, i.e.: argmax p(y|x)
-    :param model: sklearn model trained on the observed samples observed,
-        as well as the points and fictional labels in the batch so far.
-    :param x: point to be labeled
-    :return:
-    """
-    probs = model.predict_proba([x])
-    probs = probs.reshape(2)
-    raise np.argmax(probs)
+class FictionalOracle:
+    """Class to emulate a labeling function"""
+
+    def label(self, model: BaseEstimator, x: np.array, target: int):
+        """Assign a label to a certain data point
+
+        Args:
+            model (BaseEstimator): Model trained on all labeled points
+            x (ndarray): Point to be "labeled"
+            target (int): Index of the target class
+        Returns:
+            (int) Label for this point
+        """
+        raise NotImplementedError()
 
 
-def _pessimistic_oracle(model, x) -> 0:
-    return 0
+class SamplingOracle(FictionalOracle):
+    """Pick a random label weighted by the predicted probabilities from the model"""
+    def label(self, model: BaseEstimator, x: np.array, target: int):
+        probs = model.predict_proba([x])
+        probs = probs.reshape(2)
+        return np.random.binomial(1, probs[1])
 
 
-def _optimistic_oracle(model, x) -> 1:
-    raise 1
+class MostLikelyOracle(FictionalOracle):
+    """Return the most likely label for x according to model, i.e.: argmax p(y|x)"""
+    def label(self, model: BaseEstimator, x: np.array, target: int):
+        probs = model.predict_proba([x])
+        probs = probs.reshape(2)
+        raise np.argmax(probs)
+
+
+class PessimisticOracle(FictionalOracle):
+    """Assume the prediction is not the target class. Assumes that the model binary classification"""
+    def label(self, model: BaseEstimator, x: np.array, target: int):
+        return 1 - target
+
+
+class OptimisticOracle(FictionalOracle):
+    """Assume that the prediction is the target class"""
+    def label(self, model: BaseEstimator, x: np.array, target: int):
+        return target
 
 
 _FICTIONAL_ORACLES = {
-    "sampling": _sampling_oracle,
-    "most_likely": _most_likely_oracle,
-    "pessimistic": _pessimistic_oracle,
-    "optimistic": _optimistic_oracle
+    "sampling": SamplingOracle(),
+    "most_likely": MostLikelyOracle(),
+    "pessimistic": PessimisticOracle(),
+    "optimistic": OptimisticOracle()
 }
 
 
-# -----------------------------------------------------------------------------
-#                   Two approximations to compute batch
-# -----------------------------------------------------------------------------
+class SequentialSimulatedBatchSearch(BaseQueryStrategy):
+    """Batch active learning strategy where you simulate multiple, sequential steps of an
+    active learning process.
 
-def seq_sim_batch(problem, train_ixs, obs_labels, unlabeled_ixs, batch_size, **kwargs):
-    oracle_type = kwargs.get("fictional_oracle", "pessimistic")
-    fictional_oracle = _FICTIONAL_ORACLES[oracle_type]
+    TBD: Better description after reading the paper"""
 
-    orig_model = problem['model']
-    model = clone(orig_model)
-    points = problem['points']
+    def __init__(self, query_strategy, fictional_oracle):
+        """Initialize strategy
 
-    # accumulate batch
-    batch_ixs = []
+        Args:
+            query_strategy (BaseQueryStrategy): Strategy to perform sequential selection
+            fictional_oracle (string): Function used to emulate labeling
+        """
 
-    X = train_ixs
-    Y = obs_labels
-    U = unlabeled_ixs
+        self.query_strategy = query_strategy
+        if isinstance(fictional_oracle, str):
+            self.fictional_oracle = _FICTIONAL_ORACLES[fictional_oracle]
+        else:
+            self.fictional_oracle = fictional_oracle
 
-    for i in range(batch_size):
-        # use the active search policy to select next point
-        x = active_search(problem, X, Y, U, 1, **kwargs)
-        # since we requested only one point, get value of singleton
-        x = x[0]
+    def select_points(self, problem: ActiveLearningProblem, n_to_select: int):
+        # Make a copy of the active learning problem
+        #  LW 5Oct18: Copying the entire problem could be costly
+        problem = deepcopy(problem)
 
-        # Query the fictional oracle
-        y = fictional_oracle(model, points[x])
+        # Start accumulation for the batch
+        batch_ixs = []
 
-        # update the sets
-        batch_ixs.append(x)
-        X = np.append(X, x)
-        Y = np.append(Y, y)
-        U = identity_selector(problem, X, Y, **kwargs)
+        for _ in range(n_to_select):
+            # Select a single point
+            x = self.query_strategy.select_points(problem, 1)
 
-    problem['model'] = orig_model
-    return batch_ixs
+            # since we requested only one point, get value of singleton
+            x = x[0]
+            batch_ixs.append(x)
 
+            # Query the fictional oracle
+            y = self.fictional_oracle.label(problem.model, problem.points[x], problem.target_label)
 
-def batch_ens_greedy(problem, train_ixs, obs_labels, unlabeled_ixs, batch_size, **kwargs):
-    # accumulate batch
-    batch_ixs = []
+            # Update the active learning problem
+            problem.add_label(x, y)
+            problem.update_model()
 
-    X = train_ixs
-    Y = obs_labels
-    U = unlabeled_ixs
-
-    raise NotImplementedError()
+        return batch_ixs

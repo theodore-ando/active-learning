@@ -12,7 +12,7 @@ class ActiveLearningProblem:
     Optionally, you can define the budget of how many points are left to label.
     """
 
-    def __init__(self, points, labeled_ixs, labels, budget=None, target_label=1,
+    def __init__(self, points, labeled_ixs: List[int], labels, budget=None, target_label=1,
                  model: BaseEstimator = None):
         """Set up the active learning problem
 
@@ -66,3 +66,11 @@ class ActiveLearningProblem:
 
         self.model.fit(self.points[self.labeled_ixs],
                        self.labels)
+
+    def add_label(self, ind, label):
+        """Add a label to the labeled set"""
+
+        if ind in self.labeled_ixs:
+            raise AttributeError('Index already included in labeled set')
+        self.labeled_ixs.append(ind)
+        self.labels.append(label)
