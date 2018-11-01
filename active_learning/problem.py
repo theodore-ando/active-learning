@@ -25,6 +25,7 @@ class ActiveLearningProblem:
             model (BaseEstimator): Machine learning model used to guide training.
         """
 
+        # TODO: Add batch size and support for grouping points together -lw
         self.points = points
         self.labeled_ixs = labeled_ixs
         self.labels = list(labels)
@@ -55,17 +56,20 @@ class ActiveLearningProblem:
         """Get a list of the unlabeled indices
 
         Returns:
-            ([int]) Unlabelled indices
+            ([int]) Unlabeled indices
         """
         return list(
             set(range(len(self.points))).difference(self.labeled_ixs)
         )
 
     def update_model(self):
-        """Update the machine learning model given the current labeled set"""
+        """Update the machine learning model given the current labeled set
 
-        self.model.fit(self.points[self.labeled_ixs],
-                       self.labels)
+        Note: If there is no model, the model does nothing"""
+
+        if self.model is not None:
+            self.model.fit(self.points[self.labeled_ixs],
+                           self.labels)
 
     def add_label(self, ind, label):
         """Add a label to the labeled set"""

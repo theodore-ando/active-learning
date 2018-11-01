@@ -23,7 +23,7 @@ def make_grid_problem():
 
     # Make the active learning problem
     return ActiveLearningProblem.from_labeled_and_unlabled(x_known, x_labels, x_unlabeled,
-                                                           positive_label=1)
+                                                           target_label=1)
 
 
 class TestProblem(TestCase):
@@ -34,4 +34,4 @@ class TestProblem(TestCase):
         self.assertEqual((9, 2), prob.points.shape)
         self.assertListEqual(list(range(5)), prob.labeled_ixs)
         self.assertListEqual(list(range(5, 9)), prob.get_unlabeled_ixs())
-        self.assertEqual(1, prob.positive_label)
+        self.assertEqual(1, prob.target_label)

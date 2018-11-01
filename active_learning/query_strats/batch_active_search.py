@@ -2,6 +2,7 @@ from ..problem import ActiveLearningProblem
 from . import BaseQueryStrategy
 from sklearn.base import BaseEstimator
 from copy import deepcopy
+from typing import Union
 import numpy as np
 
 
@@ -72,7 +73,8 @@ class SequentialSimulatedBatchSearch(BaseQueryStrategy):
 
     TBD: Better description after reading the paper"""
 
-    def __init__(self, query_strategy, fictional_oracle):
+    def __init__(self, query_strategy: BaseQueryStrategy,
+                 fictional_oracle: Union[str, FictionalOracle]):
         """Initialize strategy
 
         Args:
@@ -88,13 +90,13 @@ class SequentialSimulatedBatchSearch(BaseQueryStrategy):
 
     def select_points(self, problem: ActiveLearningProblem, n_to_select: int):
         # Make a copy of the active learning problem
-        #  LW 5Oct18: Copying the entire problem could be costly
+        #  TODO: Copying the entire problem could be costly. Could we just copy model/labels? -lw
         problem = deepcopy(problem)
 
         # Start accumulation for the batch
         batch_ixs = []
 
-        for _ in range(n_to_select):
+        for _ in range(n_to_select - 1):
             # Select a single point
             x = self.query_strategy.select_points(problem, 1)
 
@@ -108,5 +110,12 @@ class SequentialSimulatedBatchSearch(BaseQueryStrategy):
             # Update the active learning problem
             problem.add_label(x, y)
             problem.update_model()
+
+        # Select a single point
+        x = self.query_strategy.select_points(problem, 1)
+
+        # since we requested only one point, get value of singleton
+        x = x[0]
+        batch_ixs.append(x)
 
         return batch_ixs
