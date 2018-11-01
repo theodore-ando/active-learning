@@ -14,6 +14,7 @@ https://bayesopt.github.io/papers/2017/12.pdf
 #                   Fictional Oracles to Simulate Sequential
 # -----------------------------------------------------------------------------
 
+# TODO: Add oracles for regression problems
 
 class FictionalOracle:
     """Class to emulate a labeling function"""

@@ -1,5 +1,5 @@
-from ...tests.test_problem import make_grid_problem
-from ..random_sampling import RandomQuery
+from active_learning.tests.test_problem import make_grid_problem
+from active_learning.query_strats.random_sampling import RandomQuery
 from unittest import TestCase
 
 

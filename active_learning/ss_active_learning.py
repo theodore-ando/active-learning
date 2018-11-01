@@ -1,12 +1,11 @@
 import logging
-import numpy as np
-
-#TODO: make this query a kNN sort of model or maybe clustering for predicting how likely
+# TODO: make this query a kNN sort of model or maybe clustering for predicting how likely
 from collections import Iterable
 
+import numpy as np
 from sklearn.svm import SVC
 
-from active_learning.query_strats import uncertainty_sampling
+from active_learning.query_strats.classification import uncertainty_sampling
 from active_learning.selectors import identity_selector
 
 

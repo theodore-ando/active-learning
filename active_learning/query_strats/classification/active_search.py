@@ -1,6 +1,6 @@
 from sklearn.base import BaseEstimator, clone
-from ..problem import ActiveLearningProblem
-from . import IndividualScoreQueryStrategy
+from active_learning.problem import ActiveLearningProblem
+from active_learning.query_strats import IndividualScoreQueryStrategy
 from typing import List
 import numpy as np
 

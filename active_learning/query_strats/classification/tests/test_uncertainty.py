@@ -1,8 +1,10 @@
-from ..uncertainty_sampling import UncertaintySampling
-from ...tests.test_problem import make_grid_problem
-from sklearn.neighbors import KNeighborsClassifier
 from unittest import TestCase
+
 import numpy as np
+from sklearn.neighbors import KNeighborsClassifier
+
+from active_learning.query_strats.classification.uncertainty_sampling import UncertaintySampling
+from active_learning.tests.test_problem import make_grid_problem
 
 
 class TestUncertainty(TestCase):

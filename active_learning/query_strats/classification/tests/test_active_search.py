@@ -1,11 +1,11 @@
-from ..active_search import ActiveSearch
-from ..greedy import GreedySearch
-from ...tests.test_problem import make_grid_problem
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.gaussian_process.kernels import RBF
 from unittest import TestCase
+
 import numpy as np
+from sklearn.neighbors import KNeighborsClassifier
+
+from active_learning.query_strats.classification.active_search import ActiveSearch
+from active_learning.query_strats.classification.greedy import GreedySearch
+from active_learning.tests.test_problem import make_grid_problem
 
 
 class TestActiveSearch(TestCase):
