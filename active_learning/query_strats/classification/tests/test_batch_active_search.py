@@ -1,4 +1,4 @@
-from active_learning.query_strats.batch_active_search import SequentialSimulatedBatchSearch
+from active_learning.query_strats.classification.batch_active_search import SequentialSimulatedBatchSearch
 from active_learning.query_strats.random_sampling import RandomQuery
 from active_learning.tests.test_problem import make_grid_problem
 from unittest import TestCase
