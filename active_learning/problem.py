@@ -1,5 +1,5 @@
 from sklearn.base import BaseEstimator
-from typing import List
+from typing import List, Tuple
 import numpy as np
 
 
@@ -12,8 +12,7 @@ class ActiveLearningProblem:
     Optionally, you can define the budget of how many points are left to label.
     """
 
-    def __init__(self, points, labeled_ixs: List[int], labels, budget=None, target_label=1,
-                 model: BaseEstimator = None):
+    def __init__(self, points, labeled_ixs: List[int], labels, budget=None, target_label=1):
         """Set up the active learning problem
 
         Args:
@@ -22,7 +21,6 @@ class ActiveLearningProblem:
             labels (ndarray): Labels for the labeled points, in same order as labeled_ixs
             budget (int): How many entries are budgeted to be labeled (default: all of them)
             target_label (int): Classification: Which entry is the desired class
-            model (BaseEstimator): Machine learning model used to guide training.
         """
 
         # TODO: Add batch size and support for grouping points together -lw
@@ -30,7 +28,6 @@ class ActiveLearningProblem:
         self.labeled_ixs = labeled_ixs
         self.labels = list(labels)
         self.target_label = target_label
-        self.model = model
 
         # Set the budget
         self.budget = None
@@ -62,15 +59,6 @@ class ActiveLearningProblem:
             set(range(len(self.points))).difference(self.labeled_ixs)
         )
 
-    def update_model(self):
-        """Update the machine learning model given the current labeled set
-
-        Note: If there is no model, the model does nothing"""
-
-        if self.model is not None:
-            self.model.fit(self.points[self.labeled_ixs],
-                           self.labels)
-
     def add_label(self, ind, label):
         """Add a label to the labeled set"""
 
@@ -78,3 +66,12 @@ class ActiveLearningProblem:
             raise AttributeError('Index already included in labeled set')
         self.labeled_ixs.append(ind)
         self.labels.append(label)
+
+    def get_labeled_points(self) -> Tuple[np.ndarray, np.ndarray]:
+        """Get the labeled points and their labels
+
+        Returns:
+            - (ndarray): Coordinates of all points with labels
+            - (ndarray): Labels for all labeled points
+        """
+        return self.points[self.labeled_ixs], self.labels

@@ -3,6 +3,7 @@ from multiprocessing import Pool
 from functools import partial
 from typing import List, Tuple
 import numpy as np
+from sklearn.base import BaseEstimator
 
 
 class BaseQueryStrategy:
@@ -88,3 +89,34 @@ class IndividualScoreQueryStrategy(BaseQueryStrategy):
             scores = np.concatenate(scores)
 
         return unlabled_ixs, scores
+
+
+class ModelBasedQueryStrategyMixin(BaseQueryStrategy):
+    """Mixin for query strategies that use an model to make predictions
+
+    Model objects must satisfy the scikit-learn API"""
+
+    def __init__(self, model: BaseEstimator, model_is_fitted: bool = False, **kwargs):
+        """
+        Args:
+            model (BaseEstimator): Model to use for querying
+            model_is_fitted (bool): Whether the model has been fitted already
+        """
+        super().__init__(**kwargs)
+        self.model = model
+        self._model_is_fitted = model_is_fitted
+
+    def _fit_model(self, problem: ActiveLearningProblem):
+        """Fit the model on the current active learning problem
+
+        Args:
+              problem (ActiveLearningProblem): Description of the active learning problem
+        """
+        X, y = problem.get_labeled_points()
+        self.model.fit(X, y)
+        self._model_is_fitted = True
+
+    def select_points(self, problem: ActiveLearningProblem, n_to_select: int) -> List[int]:
+        if not self._model_is_fitted:
+            self._fit_model(problem)
+        return super().select_points(problem, n_to_select)

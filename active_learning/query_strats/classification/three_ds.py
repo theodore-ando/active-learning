@@ -1,5 +1,6 @@
-from active_learning.query_strats import BaseQueryStrategy
+from active_learning.query_strats import BaseQueryStrategy, ModelBasedQueryStrategyMixin
 from active_learning.problem import ActiveLearningProblem
+from sklearn.base import BaseEstimator
 from sklearn.mixture.base import BaseMixture
 from sklearn.mixture import GaussianMixture
 from typing import List
@@ -28,7 +29,7 @@ def _calc_diversities(gmm: BaseMixture, points: np.ndarray,
     return scores
 
 
-class ThreeDs(BaseQueryStrategy):
+class ThreeDs(ModelBasedQueryStrategyMixin, BaseQueryStrategy):
     """Select points based on distance, density, and diversity.
 
     Based on work by [Reitmaier and Sick](http://ieeexplore.ieee.org/document/5949421/).
@@ -46,20 +47,23 @@ class ThreeDs(BaseQueryStrategy):
     so the effect of this factor is to pick points in low-density regions.
     """
 
-    def __init__(self, dwc: float=0.5, gmm: BaseMixture=GaussianMixture()):
+    def __init__(self, model: BaseEstimator, dwc: float = 0.5, gmm: BaseMixture = GaussianMixture()):
         """Initialize the strategy
 
         Args:
+            model (BaseEstimator): Model used to generate the "distance" metric
             dwc (float): Diversity weighting coefficient (larger to weigh diversity more)
         """
-
+        super().__init__(model)
         self.dwc = dwc
         self.gmm = gmm
 
     def select_points(self, problem: ActiveLearningProblem, n_to_select: int):
         # Get the model and search space
         points = problem.points
-        model = problem.model
+
+        # Fit the model on the new problem
+        self._fit_model(problem)
 
         # Get the labeled and unlabeled indices
         L = problem.labeled_ixs
@@ -70,7 +74,7 @@ class ThreeDs(BaseQueryStrategy):
         X_test = points[U]
 
         # calculate weighting factor
-        probs = model.predict_proba(X_test)
+        probs = self.model.predict_proba(X_test)
         eps = 1.0 / len(probs) * np.sum(1 - np.argmax(probs, axis=1))
 
         # pseudo-distance that works on models that do not have a real decision boundary

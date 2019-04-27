@@ -1,11 +1,11 @@
 from active_learning.problem import ActiveLearningProblem
-from active_learning.query_strats import IndividualScoreQueryStrategy
+from active_learning.query_strats import IndividualScoreQueryStrategy, ModelBasedQueryStrategyMixin
 from typing import List
 
 
-class GreedySearch(IndividualScoreQueryStrategy):
+class GreedySearch(ModelBasedQueryStrategyMixin, IndividualScoreQueryStrategy):
     """Query strategy where you pick the score most likely to be the target label"""
 
     def _score_chunk(self, inds: List[int], problem: ActiveLearningProblem):
-        probs = problem.model.predict_proba(problem.points[inds])
+        probs = self.model.predict_proba(problem.points[inds])
         return probs[:, problem.target_label]

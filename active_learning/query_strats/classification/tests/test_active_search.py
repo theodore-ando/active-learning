@@ -14,14 +14,13 @@ class TestActiveSearch(TestCase):
         # Make the grid problem with a KNN
         model = KNeighborsClassifier(n_neighbors=3)
         problem = make_grid_problem()
-        problem.model = model
         problem.positive_label = 1
         problem.budget = 1
-        problem.update_model()
+        model.fit(*problem.get_labeled_points())
 
         # For a budget of 1, active search should be equal to greedy
-        active_search = ActiveSearch()
-        greedy = GreedySearch()
+        active_search = ActiveSearch(model)
+        greedy = GreedySearch(model)
         inds, score = active_search.score_all(problem)
         greedy_score = greedy._score_chunk(inds, problem)
         self.assertTrue(np.isclose(greedy_score, score).all())

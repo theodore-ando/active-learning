@@ -14,11 +14,10 @@ class TestGreedy(TestCase):
         model = KNeighborsClassifier(n_neighbors=3)
         problem = make_grid_problem()
         problem.positive_label = 1
-        problem.model = model
-        problem.update_model()
+        model.fit(*problem.get_labeled_points())
 
         # Compute the probabilities for each test point
-        greedy = GreedySearch()
+        greedy = GreedySearch(model)
         inds, scores = greedy.score_all(problem)
         probs = model.predict_proba(problem.points[inds])[:, 1]
         self.assertTrue(np.isclose(probs, scores).all())

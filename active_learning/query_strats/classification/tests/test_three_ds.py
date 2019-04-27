@@ -13,11 +13,9 @@ class TestUncertainty(TestCase):
         # Make the grid problem with a KNN
         model = KNeighborsClassifier(n_neighbors=3)
         problem = make_grid_problem()
-        problem.model = model
-        problem.update_model()
 
         # Run the selection
-        d = ThreeDs()
+        d = ThreeDs(model)
         pts = d.select_points(problem, 4)
         self.assertEqual(4, len(set(pts)))
 

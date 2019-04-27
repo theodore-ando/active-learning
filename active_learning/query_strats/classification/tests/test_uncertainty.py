@@ -13,11 +13,10 @@ class TestUncertainty(TestCase):
         # Make the grid problem with a KNN
         model = KNeighborsClassifier(n_neighbors=2)
         problem = make_grid_problem()
-        problem.model = model
-        problem.update_model()
+        model.fit(*problem.get_labeled_points())
 
         # Compute the uncertainties
-        sampler = UncertaintySampling()
+        sampler = UncertaintySampling(model)
         probs = model.predict_proba(problem.points[problem.get_unlabeled_ixs()])
         score = -1 * np.multiply(probs, np.log(probs)).sum(axis=1)
         self.assertTrue(np.isclose(score, sampler.score_all(problem)[1]).all())

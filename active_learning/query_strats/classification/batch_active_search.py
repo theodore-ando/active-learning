@@ -1,5 +1,5 @@
 from active_learning.problem import ActiveLearningProblem
-from active_learning.query_strats import BaseQueryStrategy
+from active_learning.query_strats import BaseQueryStrategy, ModelBasedQueryStrategyMixin
 from sklearn.base import BaseEstimator
 from copy import deepcopy
 from typing import Union
@@ -15,6 +15,7 @@ https://bayesopt.github.io/papers/2017/12.pdf
 # -----------------------------------------------------------------------------
 
 # TODO: Add oracles for regression problems
+
 
 class FictionalOracle:
     """Class to emulate a labeling function"""
@@ -68,21 +69,23 @@ _FICTIONAL_ORACLES = {
 }
 
 
-class SequentialSimulatedBatchSearch(BaseQueryStrategy):
+class SequentialSimulatedBatchSearch(ModelBasedQueryStrategyMixin, BaseQueryStrategy):
     """Batch active learning strategy where you simulate multiple, sequential steps of an
     active learning process.
 
     TBD: Better description after reading the paper"""
 
-    def __init__(self, query_strategy: BaseQueryStrategy,
-                 fictional_oracle: Union[str, FictionalOracle]):
+    def __init__(self, model: BaseEstimator, query_strategy: BaseQueryStrategy,
+                 fictional_oracle: Union[str, FictionalOracle], model_is_fitted: bool = False):
         """Initialize strategy
 
         Args:
+            model (BaseEstimator): Model used to guide the search
+            model_is_fitted (bool): Whether the model has been fitted already
             query_strategy (BaseQueryStrategy): Strategy to perform sequential selection
             fictional_oracle (string): Function used to emulate labeling
         """
-
+        super().__init__(model=model, model_is_fitted=model_is_fitted)
         self.query_strategy = query_strategy
         if isinstance(fictional_oracle, str):
             self.fictional_oracle = _FICTIONAL_ORACLES[fictional_oracle]
@@ -106,11 +109,11 @@ class SequentialSimulatedBatchSearch(BaseQueryStrategy):
             batch_ixs.append(x)
 
             # Query the fictional oracle
-            y = self.fictional_oracle.label(problem.model, problem.points[x], problem.target_label)
+            y = self.fictional_oracle.label(self.model, problem.points[x], problem.target_label)
 
             # Update the active learning problem
             problem.add_label(x, y)
-            problem.update_model()
+            self._fit_model(problem)
 
         # Select a single point
         x = self.query_strategy.select_points(problem, 1)

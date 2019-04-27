@@ -1,6 +1,6 @@
 from sklearn.base import BaseEstimator, clone
 from active_learning.problem import ActiveLearningProblem
-from active_learning.query_strats import IndividualScoreQueryStrategy
+from active_learning.query_strats import IndividualScoreQueryStrategy, ModelBasedQueryStrategyMixin
 from typing import List
 import numpy as np
 
@@ -72,7 +72,7 @@ def _expected_future_utility(model: BaseEstimator, test_set: np.ndarray,
     return u
 
 
-class ActiveSearch(IndividualScoreQueryStrategy):
+class ActiveSearch(ModelBasedQueryStrategyMixin, IndividualScoreQueryStrategy):
     """Efficient Non-Myopic Active Search.
 
     Based on an algorithm by [Jiang et al.](http://proceedings.mlr.press/v70/jiang17d/jiang17d.pdf).
@@ -81,9 +81,6 @@ class ActiveSearch(IndividualScoreQueryStrategy):
     targets to be found later on."""
 
     def _score_chunk(self, inds: List[int], problem: ActiveLearningProblem):
-        # Create a copy of the model
-        model_copy = clone(problem.model)
-
         # Get a list of *all* unlabeled entries
         all_unlabeled_ixs = np.array(problem.get_unlabeled_ixs())
 
@@ -94,7 +91,7 @@ class ActiveSearch(IndividualScoreQueryStrategy):
             test_set = problem.points[all_unlabeled_ixs[all_unlabeled_ixs != unlabeled_ix]]
 
             # Get the probabilities of membership in either class
-            p0, p1 = problem.model.predict_proba(problem.points[[unlabeled_ix]]).reshape(-1)
+            p0, p1 = self.model.predict_proba(problem.points[[unlabeled_ix]]).reshape(-1)
 
             # If the budget is only for one more label, the score is just the probability
             if problem.budget - 1 == 0:
@@ -103,17 +100,17 @@ class ActiveSearch(IndividualScoreQueryStrategy):
                 # If not, assess the effect of labeling this point
 
                 # Evaluate the effect of the point being labeled negative
-                _lookahead(problem.points, model_copy, problem.labeled_ixs,
+                _lookahead(problem.points, self.model, problem.labeled_ixs,
                            problem.labels, problem.points[unlabeled_ix],
                            label=0)
-                s0 = _expected_future_utility(model_copy, test_set,
+                s0 = _expected_future_utility(self.model, test_set,
                                               problem.budget - 1, problem.target_label)
 
                 # Evaluate the effect of the point being labeled positive
-                _lookahead(problem.points, model_copy, problem.labeled_ixs,
+                _lookahead(problem.points, self.model, problem.labeled_ixs,
                            problem.labels, problem.points[unlabeled_ix],
                            label=1)
-                s1 = _expected_future_utility(model_copy, test_set,
+                s1 = _expected_future_utility(self.model, test_set,
                                               problem.budget - 1, problem.target_label)
 
                 # Compute the score for this point
