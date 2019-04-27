@@ -1,10 +1,10 @@
 from active_learning.problem import ActiveLearningProblem
-from active_learning.query_strats import IndividualScoreQueryStrategy, ModelBasedQueryStrategyMixin
+from active_learning.query_strats import IndividualScoreQueryStrategy, ModelBasedQueryStrategy
 from typing import List
 import numpy as np
 
 
-class UncertaintySampling(ModelBasedQueryStrategyMixin, IndividualScoreQueryStrategy):
+class UncertaintySampling(ModelBasedQueryStrategy, IndividualScoreQueryStrategy):
     """Sample entries with the highest uncertainty in the classification score"""
 
     def _score_chunk(self, inds: List[int], problem: ActiveLearningProblem):

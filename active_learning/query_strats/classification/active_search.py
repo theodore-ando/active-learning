@@ -1,6 +1,6 @@
 from sklearn.base import BaseEstimator, clone
 from active_learning.problem import ActiveLearningProblem
-from active_learning.query_strats import IndividualScoreQueryStrategy, ModelBasedQueryStrategyMixin
+from active_learning.query_strats import IndividualScoreQueryStrategy, ModelBasedQueryStrategy
 from typing import List
 import numpy as np
 
@@ -11,8 +11,7 @@ def _lookahead(points: np.ndarray, model: BaseEstimator,
     """
     Does a lookahead at what the model would be if (x, label) were added to the
     known set.  If the model implements the partial_fit API from sklearn, then
-    that will be used.  Otherwise, the model is retrained from scratch on
-    problem['points'] + x.
+    that will be used.  Otherwise, the model is retrained from scratch
 
     Args:
         model (BaseEstimator): sklearn model to be retrained
@@ -72,7 +71,7 @@ def _expected_future_utility(model: BaseEstimator, test_set: np.ndarray,
     return u
 
 
-class ActiveSearch(ModelBasedQueryStrategyMixin, IndividualScoreQueryStrategy):
+class ActiveSearch(ModelBasedQueryStrategy, IndividualScoreQueryStrategy):
     """Efficient Non-Myopic Active Search.
 
     Based on an algorithm by [Jiang et al.](http://proceedings.mlr.press/v70/jiang17d/jiang17d.pdf).

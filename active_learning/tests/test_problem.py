@@ -1,5 +1,7 @@
 from ..problem import ActiveLearningProblem
 from unittest import TestCase
+import numpy as np
+
 
 def make_grid_problem():
     """Makes a test active learning problem based on a grid
@@ -24,6 +26,13 @@ def make_grid_problem():
     # Make the active learning problem
     return ActiveLearningProblem.from_labeled_and_unlabled(x_known, x_labels, x_unlabeled,
                                                            target_label=1)
+
+
+def make_xsinx():
+    points = np.arange(0, 16)[:, None]
+    y = np.squeeze(points * np.sin(points))
+    selection = [1, 4, 11, 6]
+    return ActiveLearningProblem(points, selection, y[selection])
 
 
 class TestProblem(TestCase):

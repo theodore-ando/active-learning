@@ -91,7 +91,7 @@ class IndividualScoreQueryStrategy(BaseQueryStrategy):
         return unlabled_ixs, scores
 
 
-class ModelBasedQueryStrategyMixin(BaseQueryStrategy):
+class ModelBasedQueryStrategy(BaseQueryStrategy):
     """Mixin for query strategies that use an model to make predictions
 
     Model objects must satisfy the scikit-learn API"""
@@ -115,8 +115,3 @@ class ModelBasedQueryStrategyMixin(BaseQueryStrategy):
         X, y = problem.get_labeled_points()
         self.model.fit(X, y)
         self._model_is_fitted = True
-
-    def select_points(self, problem: ActiveLearningProblem, n_to_select: int) -> List[int]:
-        if not self._model_is_fitted:
-            self._fit_model(problem)
-        return super().select_points(problem, n_to_select)
