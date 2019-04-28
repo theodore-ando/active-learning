@@ -53,6 +53,7 @@ class ThreeDs(ModelBasedQueryStrategy, BaseQueryStrategy):
         Args:
             model (BaseEstimator): Model used to generate the "distance" metric
             dwc (float): Diversity weighting coefficient (larger to weigh diversity more)
+            gmm (BaseMixture): Strategy used to model the distribution of the search space
         """
         super().__init__(model)
         self.dwc = dwc

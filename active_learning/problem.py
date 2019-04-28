@@ -62,6 +62,14 @@ class ActiveLearningProblem:
             set(range(len(self.points))).difference(self.labeled_ixs)
         )
 
+    def get_labeled_ixs(self) -> List[int]:
+        """Get a list of the labeled indices
+
+        Returns:
+            ([int]): Labeled indices
+        """
+        return list(self.labeled_ixs)
+
     def add_label(self, ind, label):
         """Add a label to the labeled set"""
 

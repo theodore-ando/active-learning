@@ -76,16 +76,16 @@ class SequentialSimulatedBatchSearch(ModelBasedQueryStrategy, BaseQueryStrategy)
     TBD: Better description after reading the paper"""
 
     def __init__(self, model: BaseEstimator, query_strategy: BaseQueryStrategy,
-                 fictional_oracle: Union[str, FictionalOracle], model_is_fitted: bool = False):
+                 fictional_oracle: Union[str, FictionalOracle], fit_model: bool = True):
         """Initialize strategy
 
         Args:
             model (BaseEstimator): Model used to guide the search
-            model_is_fitted (bool): Whether the model has been fitted already
+            fit_model (bool): Whether to fit the model before querying
             query_strategy (BaseQueryStrategy): Strategy to perform sequential selection
             fictional_oracle (string): Function used to emulate labeling
         """
-        super().__init__(model=model, model_is_fitted=model_is_fitted)
+        super().__init__(model=model, fit_model=fit_model)
         self.query_strategy = query_strategy
         if isinstance(fictional_oracle, str):
             self.fictional_oracle = _FICTIONAL_ORACLES[fictional_oracle]

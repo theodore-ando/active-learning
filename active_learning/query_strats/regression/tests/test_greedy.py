@@ -15,4 +15,3 @@ class TestGreedy(TestCase):
         greedy = GreedySelection(model)
         selection = greedy.select_points(problem, 1)[0]
         self.assertTrue(selection == 0 or selection == 15)
-

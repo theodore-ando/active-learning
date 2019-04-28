@@ -96,15 +96,15 @@ class ModelBasedQueryStrategy(BaseQueryStrategy):
 
     Model objects must satisfy the scikit-learn API"""
 
-    def __init__(self, model: BaseEstimator, model_is_fitted: bool = False, **kwargs):
+    def __init__(self, model: BaseEstimator, fit_model: bool = True, **kwargs):
         """
         Args:
             model (BaseEstimator): Model to use for querying
-            model_is_fitted (bool): Whether the model has been fitted already
+            fit_model (bool): Whether to fit the model before selecting points
         """
         super().__init__(**kwargs)
         self.model = model
-        self._model_is_fitted = model_is_fitted
+        self.fit_model = fit_model
 
     def _fit_model(self, problem: ActiveLearningProblem):
         """Fit the model on the current active learning problem
@@ -113,5 +113,6 @@ class ModelBasedQueryStrategy(BaseQueryStrategy):
               problem (ActiveLearningProblem): Description of the active learning problem
         """
         X, y = problem.get_labeled_points()
-        self.model.fit(X, y)
-        self._model_is_fitted = True
+        if self.fit_model:
+            self.model.fit(X, y)
+        self.fit_model = True
