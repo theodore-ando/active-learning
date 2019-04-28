@@ -24,7 +24,7 @@ def _density(pts):
     return len(pts) / dists.max(), squareform(dists)
 
 
-class MCALStrategy(ModelBasedQueryStrategy):
+class MCALSelection(ModelBasedQueryStrategy):
     """The Multiple Criteria Active Learning method for support vector regression
 
     Uses the methods described by
@@ -44,7 +44,7 @@ class MCALStrategy(ModelBasedQueryStrategy):
         """
         # Make the SVR model
         model = SVR(**(svm_options if svm_options is not None else {}))
-        super(MCALStrategy, self).__init__(model, fit_model=True)
+        super(MCALSelection, self).__init__(model, fit_model=True)
 
     def select_points(self, problem: ActiveLearningProblem, n_to_select: int) -> List[int]:
         # Fit the SVR model
