@@ -9,6 +9,6 @@ install:
 - pip install -r test-requirements.txt
 script:
 - flake8 .
-- travis_wait 50 nosetests
+- travis_wait 50 nosetests --with-coverage --cover-package=active_learning
 after_success:
 - coveralls
