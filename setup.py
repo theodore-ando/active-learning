@@ -8,16 +8,20 @@ with open("README.md", "r") as rdr:
 setuptools.setup(
     name="active_learning",
     version="0.0.1",
-    author="Theodore Ando",
-    author_email="tando2@icloud.com",
+    author="Logan Ward",
+    author_email="loganw@icloud.com",
     description="Active learning library for python",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/theodore-ando/active-learning",
+    url="https://github.com/globus-labs/active-learning",
     packages=setuptools.find_packages(),
+    install_requires=[
+        'scikit-learn'
+    ],
+    python_requires='>3.5',
     classifiers=(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-    ),
+    )
 )

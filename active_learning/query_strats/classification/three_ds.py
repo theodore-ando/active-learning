@@ -22,7 +22,7 @@ def _calc_diversities(gmm: BaseMixture, points: np.ndarray,
     S_scores = gmm.score(points[S])
     S_score = np.sum(S_scores)
 
-    # LW 2Nov18: I think this is correct, but the state of S does not change the point with highest score
+    # TODO (lw): The state of S does not change the point with highest score?
     log_probs = gmm.score_samples(X_test)
     scores = -(log_probs + S_score) / (len(S) + 1)
 
@@ -47,7 +47,8 @@ class ThreeDs(ModelBasedQueryStrategy, BaseQueryStrategy):
     so the effect of this factor is to pick points in low-density regions.
     """
 
-    def __init__(self, model: BaseEstimator, dwc: float = 0.5, gmm: BaseMixture = GaussianMixture()):
+    def __init__(self, model: BaseEstimator, dwc: float = 0.5,
+                 gmm: BaseMixture = GaussianMixture()):
         """Initialize the strategy
 
         Args:
@@ -66,12 +67,8 @@ class ThreeDs(ModelBasedQueryStrategy, BaseQueryStrategy):
         # Fit the model on the new problem
         self._fit_model(problem)
 
-        # Get the labeled and unlabeled indices
-        L = problem.labeled_ixs
+        # Get the unlabeled indices and points
         U = problem.get_unlabeled_ixs()
-
-        # Separate the model into the labeled and unlabeled points
-        X_train = points[L]
         X_test = points[U]
 
         # calculate weighting factor
@@ -82,7 +79,7 @@ class ThreeDs(ModelBasedQueryStrategy, BaseQueryStrategy):
         probs = np.apply_along_axis(np.sort, 1, probs)
         c1 = probs[:, -1]
         c2 = probs[:, -2]
-        distances = np.log(c1) - np.log(c2) # Only work for binary classification
+        distances = np.log(c1) - np.log(c2)  # Only work for binary classification
 
         # density function via mixture model
         #  The paper describes traininng the model with initial unlabled set and a small labeled set

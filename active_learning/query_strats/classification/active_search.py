@@ -1,4 +1,4 @@
-from sklearn.base import BaseEstimator, clone
+from sklearn.base import BaseEstimator
 from active_learning.problem import ActiveLearningProblem
 from active_learning.query_strats import IndividualScoreQueryStrategy, ModelBasedQueryStrategy
 from typing import List
@@ -75,8 +75,9 @@ class ActiveSearch(ModelBasedQueryStrategy, IndividualScoreQueryStrategy):
     """Efficient Non-Myopic Active Search.
 
     Based on an algorithm by [Jiang et al.](http://proceedings.mlr.press/v70/jiang17d/jiang17d.pdf).
-    Automatically balances between the desire to greedily query points highly likely to be the target
-    class and those which, if queries, will lead to model improvements that will lead to more
+    Automatically balances between the desire to greedily query points
+    highly likely to be the target class and those which, if queried,
+    will lead to model improvements that will lead to more
     targets to be found later on."""
 
     def _score_chunk(self, inds: List[int], problem: ActiveLearningProblem):

@@ -1,6 +1,5 @@
 from unittest import TestCase
 
-import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 
 from active_learning.query_strats.classification.three_ds import ThreeDs

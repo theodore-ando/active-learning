@@ -31,7 +31,7 @@ class MCALSelection(ModelBasedQueryStrategy):
     `Demir and Bruzzone <https://www.sciencedirect.com/science/article/abs/pii/S0031320314000375>`_
     to select points for evaluation based on:
 
-    1. *Relevancy*: Whether each point is likely to be important in model fitting (e.g., a support vector
+    1. *Relevancy*: Whether each point is likely to be important in model fitting
     2. *Diversity*: Whether the points are different regions of the search space
     3. *Density*: Whether the points are from regions that contain many other points
     """
@@ -57,10 +57,10 @@ class MCALSelection(ModelBasedQueryStrategy):
         train_not_sv_ixs = train_ixs[~support_mask]
 
         # train clusterer
-        # extra arrays and whatnot to track indices into the points array and whether a given points was
-        # a training point or not
+        # extra arrays and whatnot to track indices into the points array
+        # and whether a given points was a training point or not
         clusterer = DBSCAN(eps=1.0)
-        unlabeled_ixs =  problem.get_unlabeled_ixs()
+        unlabeled_ixs = problem.get_unlabeled_ixs()
         clst_ixs = np.concatenate([train_not_sv_ixs, unlabeled_ixs])
         train_mask = np.zeros(clst_ixs.shape, dtype=bool)
         train_mask[:len(train_not_sv_ixs)] = True

@@ -1,5 +1,4 @@
 from unittest import TestCase
-from sklearn.linear_model import LinearRegression
 from active_learning.query_strats.regression.mcal_regression import MCALSelection
 from active_learning.tests.test_problem import make_xsinx
 

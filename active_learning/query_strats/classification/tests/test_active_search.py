@@ -32,4 +32,3 @@ class TestActiveSearch(TestCase):
         score = active_search._score_chunk(sorted(inds), problem)
         self.assertTrue(np.isclose(score,
                                    [[4./3, 4./3, 4./3, 1]]).all())
-

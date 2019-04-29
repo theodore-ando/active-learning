@@ -50,7 +50,8 @@ class MostLikelyOracle(FictionalOracle):
 
 
 class PessimisticOracle(FictionalOracle):
-    """Assume the prediction is not the target class. Assumes that the model binary classification"""
+    """Assume the prediction is not the target class.
+     Assumes that the model binary classification"""
     def label(self, model: BaseEstimator, x: np.array, target: int):
         return 1 - target
 
