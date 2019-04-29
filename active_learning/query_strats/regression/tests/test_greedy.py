@@ -14,4 +14,7 @@ class TestGreedy(TestCase):
         # depending on the slope of the linear regression line
         greedy = GreedySelection(model)
         selection = greedy.select_points(problem, 1)[0]
-        self.assertTrue(selection == 0 or selection == 15)
+        if greedy.model.coef_.sum() > 0:
+            self.assertEqual(0, selection)
+        else:
+            self.assertEqual(15, selection)

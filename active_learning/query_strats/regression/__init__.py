@@ -2,3 +2,4 @@
 
 from .greedy import GreedySelection
 from .mcal_regression import MCALSelection
+from .uncertainty import UncertaintySampling

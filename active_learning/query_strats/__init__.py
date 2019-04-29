@@ -62,6 +62,8 @@ class IndividualScoreQueryStrategy(BaseQueryStrategy):
     def score_all(self, problem: ActiveLearningProblem) -> Tuple[List[int], List[float]]:
         """Determine the scores for all non-labeled points
 
+        Entries with the highest scores are selected
+
         Args:
             problem (ActiveLearningProblem): Active learning problem definition
         Return:
@@ -82,6 +84,7 @@ class IndividualScoreQueryStrategy(BaseQueryStrategy):
             fun = partial(self._score_chunk, problem=problem)
 
             # Score each chunk
+            #  TODO (lw): Switch to joblib, so that we can use distributed memory executors
             with Pool(self.n_cpus) as p:
                 scores = p.map(fun, chunks)
 
