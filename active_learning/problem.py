@@ -33,7 +33,7 @@ class ActiveLearningProblem:
         self.objective_fun = objective_fun
 
         # Set the budget
-        self.budget = None
+        self.budget = budget
         if budget is None:
             self.budget = len(points) - len(labeled_ixs)
 
@@ -70,8 +70,13 @@ class ActiveLearningProblem:
         """
         return list(self.labeled_ixs)
 
-    def add_label(self, ind, label):
-        """Add a label to the labeled set"""
+    def add_label(self, ind: int, label: float):
+        """Add a label to the labeled set
+
+        Args:
+            ind (int): Index of point to label
+            label (float): Label of that point
+        """
 
         if ind in self.labeled_ixs:
             raise AttributeError('Index already included in labeled set')

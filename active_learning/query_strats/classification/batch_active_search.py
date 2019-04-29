@@ -116,6 +116,9 @@ class SequentialSimulatedBatchSearch(ModelBasedQueryStrategy, BaseQueryStrategy)
             problem.add_label(x, y)
             self._fit_model(problem)
 
+            # Decrement the budget
+            problem.budget -= 1
+
         # Select a single point
         x = self.query_strategy.select_points(problem, 1)
 
