@@ -1,5 +1,5 @@
 from active_learning.problem import ActiveLearningProblem
-from active_learning.query_strats import IndividualScoreQueryStrategy, ModelBasedQueryStrategy
+from active_learning.query_strats.base import IndividualScoreQueryStrategy, ModelBasedQueryStrategy
 from typing import List
 import numpy as np
 

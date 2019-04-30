@@ -1,4 +1,4 @@
-from active_learning.query_strats import ModelBasedQueryStrategy
+from active_learning.query_strats.base import ModelBasedQueryStrategy
 from active_learning.problem import ActiveLearningProblem
 
 from scipy.spatial.distance import pdist, squareform

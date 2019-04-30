@@ -1,4 +1,4 @@
-from active_learning.query_strats import BaseQueryStrategy, ModelBasedQueryStrategy
+from active_learning.query_strats.base import ModelBasedQueryStrategy
 from active_learning.problem import ActiveLearningProblem
 from sklearn.base import BaseEstimator
 from sklearn.mixture.base import BaseMixture
@@ -29,10 +29,10 @@ def _calc_diversities(gmm: BaseMixture, points: np.ndarray,
     return scores
 
 
-class ThreeDs(ModelBasedQueryStrategy, BaseQueryStrategy):
+class ThreeDs(ModelBasedQueryStrategy):
     """Select points based on distance, density, and diversity.
 
-    Based on work by [Reitmaier and Sick](http://ieeexplore.ieee.org/document/5949421/).
+    Based on work by `Reitmaier and Sick <http://ieeexplore.ieee.org/document/5949421/>`_.
 
     Distance is based on how far a point is from the decision boundary. The distance is computed
     based on the ratio between the probability of the 1st and 2nd-most likely classes. Points

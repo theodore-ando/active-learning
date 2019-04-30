@@ -1,6 +1,6 @@
 from sklearn.base import BaseEstimator, clone
 from active_learning.problem import ActiveLearningProblem
-from active_learning.query_strats import IndividualScoreQueryStrategy, ModelBasedQueryStrategy
+from active_learning.query_strats.base import IndividualScoreQueryStrategy, ModelBasedQueryStrategy
 from typing import List
 import numpy as np
 
@@ -75,7 +75,8 @@ def _expected_future_utility(model: BaseEstimator, test_set: np.ndarray,
 class ActiveSearch(ModelBasedQueryStrategy, IndividualScoreQueryStrategy):
     """Efficient Non-Myopic Active Search.
 
-    Based on an algorithm by [Jiang et al.](http://proceedings.mlr.press/v70/jiang17d/jiang17d.pdf).
+    Based on an algorithm by
+    `Jiang et al. <http://proceedings.mlr.press/v70/jiang17d/jiang17d.pdf>`_.
     Automatically balances between the desire to greedily query points
     highly likely to be the target class and those which, if queried,
     will lead to model improvements that will lead to more

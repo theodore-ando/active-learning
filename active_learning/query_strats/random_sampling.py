@@ -1,5 +1,5 @@
 from ..problem import ActiveLearningProblem
-from . import IndividualScoreQueryStrategy
+from active_learning.query_strats.base import IndividualScoreQueryStrategy
 from random import random
 from typing import List
 
