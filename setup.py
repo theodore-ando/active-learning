@@ -7,9 +7,9 @@ with open("README.md", "r") as rdr:
 
 setuptools.setup(
     name="active_learning",
-    version="0.0.1",
+    version="0.1.0",
     author="Logan Ward",
-    author_email="loganw@icloud.com",
+    author_email="lward@anl.gov",
     description="Active learning library for python",
     long_description=long_description,
     long_description_content_type="text/markdown",
