@@ -100,7 +100,12 @@ class MCALSelection(ModelBasedQueryStrategy):
         if len(selected) < n_to_select:
             good_ixs = sum([list(map(lambda x: x[2], clst2pts[c])) for c in good_clsts], list())
             unselected_ixs = set(good_ixs).difference(selected)
-            selected.extend(sample(unselected_ixs, n_to_select - len(selected)))
+            if len(unselected_ixs) <= n_to_select - len(selected):
+                # Add all to the list
+                selected.extend(unselected_ixs)
+            else:
+                # Add a random subset
+                selected.extend(sample(unselected_ixs, n_to_select - len(selected)))
 
         # Randomly pick points from all the clusters, even the bad ones
         if len(selected) < n_to_select:
