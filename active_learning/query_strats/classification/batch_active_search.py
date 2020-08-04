@@ -1,5 +1,5 @@
 from active_learning.problem import ActiveLearningProblem
-from active_learning.query_strats import BaseQueryStrategy, ModelBasedQueryStrategy
+from active_learning.query_strats.base import ModelBasedQueryStrategy, BaseQueryStrategy
 from sklearn.base import BaseEstimator
 from copy import deepcopy
 from typing import Union
@@ -70,7 +70,7 @@ _FICTIONAL_ORACLES = {
 }
 
 
-class SequentialSimulatedBatchSearch(ModelBasedQueryStrategy, BaseQueryStrategy):
+class SequentialSimulatedBatchSearch(ModelBasedQueryStrategy):
     """Batch active learning strategy where you simulate multiple, sequential steps of an
     active learning process.
 
@@ -115,6 +115,9 @@ class SequentialSimulatedBatchSearch(ModelBasedQueryStrategy, BaseQueryStrategy)
             # Update the active learning problem
             problem.add_label(x, y)
             self._fit_model(problem)
+
+            # Decrement the budget
+            problem.budget -= 1
 
         # Select a single point
         x = self.query_strategy.select_points(problem, 1)

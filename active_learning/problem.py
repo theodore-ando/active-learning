@@ -1,5 +1,7 @@
+"""Classes and methods related to defining an active learning problem"""
+
 from .objective import ObjectiveFunction, Minimize
-from typing import List, Tuple
+from typing import List, Tuple, Union
 import numpy as np
 
 
@@ -33,21 +35,21 @@ class ActiveLearningProblem:
         self.objective_fun = objective_fun
 
         # Set the budget
-        self.budget = None
+        self.budget = budget
         if budget is None:
             self.budget = len(points) - len(labeled_ixs)
 
     @classmethod
-    def from_labeled_and_unlabled(cls, labeled_points, labels, unlabled_points, **kwargs):
+    def from_labeled_and_unlabled(cls, labeled_points, labels, unlabeled_points, **kwargs):
         """Construct an active learning problem from labeled and unlabled points
 
         Args:
             labeled_points (ndarray): Coordinates of points with labels
             labels (ndarray): Labels of those points
-            unlabled_points (ndarray): Points that could possibly be labeled
+            unlabeled_points (ndarray): Points that could possibly be labeled
         """
 
-        points = np.vstack((labeled_points, unlabled_points))
+        points = np.vstack((labeled_points, unlabeled_points))
         labeled_ixs = list(range(len(labeled_points)))
 
         return cls(points, labeled_ixs, labels, **kwargs)
@@ -70,15 +72,20 @@ class ActiveLearningProblem:
         """
         return list(self.labeled_ixs)
 
-    def add_label(self, ind, label):
-        """Add a label to the labeled set"""
+    def add_label(self, ind: int, label: float):
+        """Add a label to the labeled set
+
+        Args:
+            ind (int): Index of point to label
+            label (float): Label of that point
+        """
 
         if ind in self.labeled_ixs:
             raise AttributeError('Index already included in labeled set')
         self.labeled_ixs.append(ind)
         self.labels.append(label)
 
-    def get_labeled_points(self) -> Tuple[np.ndarray, np.ndarray]:
+    def get_labeled_points(self) -> Tuple[np.ndarray, List[Union[float, int]]]:
         """Get the labeled points and their labels
 
         Returns:

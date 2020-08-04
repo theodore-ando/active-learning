@@ -1,5 +1,5 @@
 from ...problem import ActiveLearningProblem
-from .. import ModelBasedQueryStrategy, IndividualScoreQueryStrategy
+from active_learning.query_strats.base import IndividualScoreQueryStrategy, ModelBasedQueryStrategy
 from typing import List
 
 

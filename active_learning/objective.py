@@ -1,4 +1,4 @@
-"""Objective functions"""
+"""Objective functions used in defining an active learning problem"""
 
 from typing import List
 import numpy as np

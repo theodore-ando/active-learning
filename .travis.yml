@@ -6,8 +6,9 @@ install:
 - pip install --upgrade pip
 - pip install -e .
 - pip install -r requirements.txt -U --upgrade-strategy eager
+- pip install -r test-requirements.txt
 script:
 - flake8 .
-- travis_wait 50 nosetests
+- travis_wait 50 nosetests --with-coverage --cover-package=active_learning
 after_success:
 - coveralls

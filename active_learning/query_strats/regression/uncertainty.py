@@ -1,4 +1,4 @@
-from active_learning.query_strats import ModelBasedQueryStrategy, IndividualScoreQueryStrategy
+from active_learning.query_strats.base import IndividualScoreQueryStrategy, ModelBasedQueryStrategy
 from active_learning.problem import ActiveLearningProblem
 from inspect import signature
 from typing import List
