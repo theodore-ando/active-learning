@@ -1,8 +1,11 @@
-import numpy as np
+from ..problem import ActiveLearningProblem
+from active_learning.query_strats.base import IndividualScoreQueryStrategy
+from random import random
+from typing import List
 
 
-def random_sampling(problem, train_ixs, obs_labels, unlabeled_ixs, npoints, **kwargs):
-    """Simple random sample of points from unlabeled indices"""
-    rand_ixs = np.random.randint(0, len(unlabeled_ixs), size=npoints)
+class RandomQuery(IndividualScoreQueryStrategy):
+    """Randomly select entries from the unlabeled set"""
 
-    return unlabeled_ixs[rand_ixs]
+    def _score_chunk(self, inds: List[int], problem: ActiveLearningProblem):
+        return [random() for _ in inds]

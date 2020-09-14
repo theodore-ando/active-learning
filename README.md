@@ -1,23 +1,23 @@
 # Active Learning for Python
+[![Build Status](https://travis-ci.org/globus-labs/active-learning.svg?branch=master)](https://travis-ci.org/globus-labs/active-learning)
+[![Coverage Status](https://coveralls.io/repos/github/globus-labs/active-learning/badge.svg?branch=master)](https://coveralls.io/github/globus-labs/active-learning?branch=master)
 
-This is a toolkit for active learning in python designed to be used in conjunction 
-with scikit-learn models.  Its structure comes from Roman Garnett's active learning [toolbox for Matlab](https://github.com/rmgarnett/active_learning).
+Toolkit for active learning in Python designed to be used in conjunction with scikit-learn models.
 
 ## Installation
 
-You can install by cloning with `git clone https://github.com/theodore-ando/active-learning` followed
+You can install by cloning with `git clone https://github.com/globus-labs/active-learning` followed
 by `pip install -e ./active-learning`
 
-## Basic usage
+## Usage
 
-See [example.ipynb](example.ipynb) for the basic usage of the API and a simple comparison of some query strategies.
-[example_live.ipynb](example_live.ipynb) shows how easy it is to integrate a real person into the labeling loop. 
+Examples and tutorials TBD.
 
-## Advanced Usage
+## See Also 
 
-In the works.
+Roman Garnett's active learning [toolbox for Matlab](https://github.com/rmgarnett/active_learning).
 
-# License
+## License
 
 Copyright 2018 Theodore Ando
 
